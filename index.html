@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="description" content="Detect if DevTools is open">
+		<meta name="author" content="Sindre Sorhus">
+		<meta name="viewport" content="width=device-width">
+		<title>Inspect window Block option</title>
+	</head>
+	<body>
+		<div class="container">
+			<section class="main span12 text-center">
+				<h1>Is DevTools open?</h1>
+				<h2 id="devtools-state"></h2>
+				<h3 id="devtools-orientation"></h3>
+
+			</section>
+		</div>
+		<script src="https://code.jquery.com/jquery-3.6.3.slim.min.js" integrity="sha256-ZwqZIVdD3iXNyGHbSYdsmWP//UBokj2FHAxKuSBKDSo=" crossorigin="anonymous"></script>
+		<script type="module">
+			const devtools = {
+	isOpen: false,
+	orientation: undefined,
+};
+
+const threshold = 170;
+
+const emitEvent = (isOpen, orientation) => {
+	globalThis.dispatchEvent(new globalThis.CustomEvent('devtoolschange', {
+		detail: {
+			isOpen,
+			orientation,
+		},
+	}));
+};
+
+const main = ({emitEvents = true} = {}) => {
+	const widthThreshold = globalThis.outerWidth - globalThis.innerWidth > threshold;
+	const heightThreshold = globalThis.outerHeight - globalThis.innerHeight > threshold;
+	const orientation = widthThreshold ? 'vertical' : 'horizontal';
+
+	if (
+		!(heightThreshold && widthThreshold)
+		&& ((globalThis.Firebug && globalThis.Firebug.chrome && globalThis.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)
+	) {
+		if ((!devtools.isOpen || devtools.orientation !== orientation) && emitEvents) {
+			emitEvent(true, orientation);
+		}
+
+		devtools.isOpen = true;
+		devtools.orientation = orientation;
+	} else {
+		if (devtools.isOpen && emitEvents) {
+			emitEvent(false, undefined);
+		}
+
+		devtools.isOpen = false;
+		devtools.orientation = undefined;
+	}
+};
+
+main({emitEvents: false});
+setInterval(main, 500);
+
+			window.addEventListener('devtoolschange', event => {
+				document.getElementById('devtools-state').textContent = event.detail.isOpen ? 'yes' : 'no';
+
+				// orientationElement.textContent = event.detail.orientation ? event.detail.orientation : '';
+			});
+
+$(document).bind("contextmenu", function (e) {
+   e.preventDefault();
+});
+$(document).on("keydown", function (e) {
+   if (event.keyCode == 123) {
+       return false;
+   }
+   if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+       return false;
+   }
+   if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
+       return false;
+   }
+   if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+       return false;
+   }
+   if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+       return false;
+   }
+});
+
+
+		</script>
+	</body>
+</html>
